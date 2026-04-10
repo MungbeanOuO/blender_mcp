@@ -9,7 +9,7 @@
   },
   "homepage": "https://www.blender.org/lab/mcp-server/",
   "support": "https://projects.blender.org/lab/blender_mcp/issues/",
-  "icon": "blender_icon_16x16.png",
+  "icon": "blender_icon.png",
   "server": {
     "type": "uv",
     "entry_point": "mcp/blmcp/__init__.py",
