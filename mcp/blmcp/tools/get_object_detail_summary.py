@@ -24,7 +24,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Get Object Detail Summary",
-            "readOnlyHint": True
+            "readOnlyHint": True,
         }
     )
     def get_object_detail_summary(

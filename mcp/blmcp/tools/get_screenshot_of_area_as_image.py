@@ -26,7 +26,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Get Area Screenshot",
-            "readOnlyHint": True
+            "readOnlyHint": True,
         }
     )
     def get_screenshot_of_area_as_image(

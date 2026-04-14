@@ -23,8 +23,8 @@ _TOOL_CALL = toolcode_wrap_with_calling_convention(toolcode_load_from_filepath(_
 def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
-            "title": "Get Blendfile Usage Summary",
-            "readOnlyHint": True
+            "title": "Get Blend-File Usage Summary",
+            "readOnlyHint": True,
         }
     )
     def get_blendfile_summary_usage_guess() -> dict[str, object]:
@@ -35,8 +35,8 @@ def register(mcp: FastMCP) -> None:
 
     @mcp.tool(
         annotations={
-            "title": "Get Blendfile Usage Summary for Command-Line",
-            "readOnlyHint": True
+            "title": "Get Blend-File Usage Summary for Command-Line",
+            "readOnlyHint": True,
         }
     )
     def get_blendfile_summary_usage_guess_for_cli(blend_file: str) -> dict[str, object]:

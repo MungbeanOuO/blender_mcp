@@ -24,7 +24,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Focus on Object Data",
-            "destructiveHint": True
+            "destructiveHint": True,
         }
     )
     def jump_to_view3d_object_data_by_name(

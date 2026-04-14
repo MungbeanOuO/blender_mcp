@@ -17,7 +17,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Execute Python Code",
-            "destructiveHint": True
+            "destructiveHint": True,
         }
     )
     def execute_blender_code(code: str) -> dict[str, object]:
@@ -36,7 +36,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Execute Python Code for Command-Line",
-            "destructiveHint": True
+            "destructiveHint": True,
         }
     )
     def execute_blender_code_for_cli(blend_file: str, code: str) -> dict[str, object]:

@@ -23,7 +23,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Get Screenshot as JSON",
-            "readOnlyHint": True
+            "readOnlyHint": True,
         }
     )
     def get_screenshot_of_window_as_json() -> dict[str, object]:

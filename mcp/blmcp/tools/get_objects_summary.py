@@ -23,7 +23,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Get Objects Summary",
-            "readOnlyHint": True
+            "readOnlyHint": True,
         }
     )
     def get_objects_summary() -> dict[str, object]:

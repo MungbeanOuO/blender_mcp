@@ -24,7 +24,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Render Thumbnail to Path",
-            "destructiveHint": True
+            "destructiveHint": True,
         }
     )
     def render_thumbnail_to_path(output_path: str) -> dict[str, object]:

@@ -26,7 +26,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Get Window Screenshot",
-            "readOnlyHint": True
+            "readOnlyHint": True,
         }
     )
     def get_screenshot_of_window_as_image(

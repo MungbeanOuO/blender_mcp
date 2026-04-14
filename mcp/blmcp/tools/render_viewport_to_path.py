@@ -24,7 +24,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Render Viewport to Path",
-            "readOnlyHint": True
+            "readOnlyHint": True,
         }
     )
     def render_viewport_to_path(output_path: str) -> dict[str, object]:

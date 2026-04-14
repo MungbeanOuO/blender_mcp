@@ -24,7 +24,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Switch to Matching Workspace",
-            "destructiveHint": True
+            "destructiveHint": True,
         }
     )
     def jump_to_tab_by_space_type(

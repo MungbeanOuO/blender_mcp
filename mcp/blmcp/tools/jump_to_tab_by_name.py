@@ -24,7 +24,7 @@ def register(mcp: FastMCP) -> None:
     @mcp.tool(
         annotations={
             "title": "Switch to Workspace",
-            "destructiveHint": True
+            "destructiveHint": True,
         }
     )
     def jump_to_tab_by_name(name: str) -> dict[str, object]:
