@@ -6,7 +6,7 @@ A lightweight MCP (Model Context Protocol) server for Blender.
 Allows LLM assistants to interact with a running Blender instance – inspecting scenes, executing Python code, rendering, and navigating the interface.
 
 ## Features
-It supports running arbritary Python code within Blender. This allows for advanced scene analysis and debugging. It also contains the complete API and user manual as resources, helping the LLM to access the latest version of both documentations.
+It supports running arbitrary Python code within Blender. This allows for advanced scene analysis and debugging. It also contains the complete API and user manual as resources, helping the LLM to access the latest version of both documentations.
 
 ## Installation
 
@@ -53,12 +53,12 @@ You can find more examples in the [documentation](https://www.blender.org/lab/mc
 
 **User prompt**: "Analyze the scene and list the outliers: objects with highest polygon count but smaller size from the camera point of view."
 
-**Expected behaviour:**
-An analysis that consider the final amount of polygons after the object modifiers are applied. This usually happens by getting the object from the depedency graph.
+**Expected behavior:**
+An analysis that consider the final amount of polygons after the object modifiers are applied. This usually happens by getting the object from the dependency graph.
 
 The biggest outliers are: `coat 1` and `alphabet`.
 
-Depending on whether or not the RENDER context was used (as oppose to the VIEWPORT context), the biggest outlier (`coat 1`) may show 37k or 74k polygons. This is the only object that has a modifier which is only used for rendering. Every other object should report the same polycount regardless of the context.
+Depending on whether or not the RENDER context was used (as oppose to the VIEWPORT context), the biggest outlier (`coat 1`) may show 37k or 74k polygons. This is the only object that has a modifier which is only used for rendering. Every other object should report the same poly-count regardless of the context.
 
 ## Privacy Policy
 See our privacy policy: https://www.blender.org/privacy-policy/
