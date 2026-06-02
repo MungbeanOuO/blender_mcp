@@ -79,6 +79,16 @@ def _image_downscale_to_size_limit(
         if max_idx < 0:
             return data
 
+        # Safety floor: pre-compute the most aggressive divisor as a fallback.
+        # On macOS Retina displays, HiDPI screenshots can be so large that
+        # no divisor in the binary search produces an acceptably small PNG.
+        # Without this fallback the function would return the full-resolution
+        # image, whose base64-encoded size blows past the MCP 1 MB message
+        # limit and causes a JSON parse failure in the MCP server.
+        # Always encode the max divisor first so we can degrade gracefully.
+        max_divisor_data = _encode_at_divisor(divisors[max_idx])
+        fallback = max_divisor_data if max_divisor_data is not None else data
+
         # Binary search for the lowest divisor whose output fits.
         # Each probe estimates the next midpoint from the actual encoded size.
         # PNG size scales roughly with pixel count (1/divisor^2),
@@ -113,6 +123,12 @@ def _image_downscale_to_size_limit(
                 # Re-estimate: need more scaling.
                 if test_filedata_as_bytes is not None:
                     estimated = divisors[mid] * math.sqrt(len(test_filedata_as_bytes) / size_limit_in_bytes)
+
+        # If the binary search found no divisor that fits, return the
+        # pre-computed fallback (most aggressive divisor) instead of the
+        # full-resolution image.
+        if len(data) > size_limit_in_bytes:
+            data = fallback
 
     finally:
         im.free()

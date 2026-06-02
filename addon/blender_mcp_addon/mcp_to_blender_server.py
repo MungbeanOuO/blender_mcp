@@ -449,10 +449,19 @@ def _service_clients() -> bool:
             except ValueError:
                 pass
         else:
+            # Switch to blocking mode for sendall(). On macOS the
+            # non-blocking send buffer can fill before a ~1 MB
+            # response (e.g. screenshot base64) is fully written,
+            # causing BlockingIOError.  That OSError was silently
+            # swallowed, the connection was closed, and the MCP
+            # server received a truncated JSON payload.
+            client.conn.setblocking(True)
             try:
                 client.conn.sendall(_encode_response(exec_result.response))
             except OSError:
                 pass
+            finally:
+                client.conn.setblocking(False)
             _close_client(client)
         did_work = True
 
