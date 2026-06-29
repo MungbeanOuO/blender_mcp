@@ -206,6 +206,36 @@ def _encode_response(response: dict[str, object]) -> bytes:
     return (json.dumps(response) + "\0").encode("utf-8")
 
 
+def _send_all_nonblocking(conn: socket.socket, data: bytes) -> None:
+    """
+    Reliably send all of *data* on a non-blocking socket.
+
+    ``socket.sendall`` must NOT be used on a non-blocking socket: once the OS
+    send buffer fills it raises ``BlockingIOError`` and silently drops the
+    remaining bytes. Responses larger than the send buffer (e.g. screenshot
+    PNGs, ~1 MB of base64) therefore arrive truncated, producing invalid JSON
+    on the client. Loop on partial sends instead, waiting for the socket to
+    become writable again (bounded by ``_CLIENT_TIMEOUT``).
+
+    Raises ``OSError`` on a broken or timed-out connection; callers already
+    handle that to drop the client.
+    """
+    view = memoryview(data)
+    sent_total = 0
+    while sent_total < len(view):
+        try:
+            sent = conn.send(view[sent_total:])
+        except BlockingIOError:
+            # Send buffer is full; wait until the socket is writable, then retry.
+            _readable, writable, _errored = select.select([], [conn], [], _CLIENT_TIMEOUT)
+            if not writable:
+                raise OSError("Send timed out after {:.0f}s".format(_CLIENT_TIMEOUT))
+            continue
+        if sent == 0:
+            raise OSError("Socket connection broken during send")
+        sent_total += sent
+
+
 def _execute_code(
         code: str,
         strict_json: bool,
@@ -386,7 +416,7 @@ def _service_clients() -> bool:
                     "status": "error",
                     "message": "Client timed out",
                 }
-                client.conn.sendall(_encode_response(err))
+                _send_all_nonblocking(client.conn, _encode_response(err))
             except OSError:
                 pass
             _close_client(client)
@@ -415,7 +445,7 @@ def _service_clients() -> bool:
                     "status": "error",
                     "message": "Request exceeds {:d} byte limit".format(_MAX_REQUEST_BYTES),
                 }
-                client.conn.sendall(_encode_response(err))
+                _send_all_nonblocking(client.conn, _encode_response(err))
             except OSError:
                 pass
             _close_client(client)
@@ -450,7 +480,7 @@ def _service_clients() -> bool:
                 pass
         else:
             try:
-                client.conn.sendall(_encode_response(exec_result.response))
+                _send_all_nonblocking(client.conn, _encode_response(exec_result.response))
             except OSError:
                 pass
             _close_client(client)
