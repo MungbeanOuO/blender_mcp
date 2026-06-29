@@ -35,6 +35,12 @@ def register(mcp: FastMCP) -> None:
         """
         Switch to a workspace whose main area matches *space_type*.
 
+        *space_type* accepts either a coarse editor type ('VIEW_3D',
+        'NODE_EDITOR', 'IMAGE_EDITOR', ...) or a fine-grained ui_type
+        ('ShaderNodeTree', 'CompositorNodeTree', 'GeometryNodeTree', 'UV', ...)
+        - the same vocabulary as the screenshot tool's *area_ui_type*.
+        An unknown value returns a structured error listing valid options.
+
         If *allow_edits* is True and no matching workspace exists, a new one
         is created by duplicating the current workspace.
         """
