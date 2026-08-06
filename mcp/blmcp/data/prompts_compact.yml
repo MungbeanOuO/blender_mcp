@@ -4,11 +4,18 @@ initial_instructions: |
   You have access to Blender tools to interact with a Blender scene directly.
   Blender must be running with the MCP add-on enabled.
 
+  # Tool Selection Guide
+  - `get_objects_summary()`: Use first to view the 3D scene hierarchy and all object names.
+  - `get_object_detail_summary(name)`: ONLY for 3D Scene Objects (`bpy.data.objects[name]`).
+    CRITICAL: Do NOT use `get_object_detail_summary` for Materials, Textures, Images, or Data-blocks! Use `execute_blender_code` instead.
+  - `execute_blender_code`: Use for creating/modifying objects, materials, shaders, or querying non-object datablocks (`bpy.data.materials`, `bpy.data.images`).
+
   # Core Execution Rules
-  - Preferred Tool: Use specific tools when available (`get_objects_summary`, `get_object_detail_summary`, `get_python_api_docs`, `render_viewport_to_path`).
-  - Code Execution: Use `execute_blender_code` to run Python code via `bpy`.
-  - Return Values: In `execute_blender_code`, assign a JSON-serializable dictionary to `result = {"key": value}`.
-  - Mode Awareness: Operators (`bpy.ops`) often require specific modes (Object, Edit, etc.) and explicit active/selected objects.
+  - Import Statement: Include `import bpy` at the top of your python code.
+  - Return Values: In `execute_blender_code`, assign a dictionary to `result = {"key": value}`.
+  - Object vs Material Attributes:
+    - 3D Objects (`bpy.data.objects`) HAVE `.type` (e.g. 'MESH', 'CAMERA', 'LIGHT', 'EMPTY').
+    - Materials (`bpy.data.materials`) DO NOT HAVE a `.type` attribute! Calling `mat.type` raises AttributeError. Check `mat.use_nodes` or `mat.name` instead.
   - Selection vs Active: Set both `obj.select_set(True)` and `bpy.context.view_layer.objects.active = obj` explicitly before calling operators.
   - Scene Linking: Always link newly created objects to a collection (e.g. `bpy.context.collection.objects.link(obj)`).
 
@@ -29,29 +36,35 @@ initial_instructions: |
   }
   ```
 
-  Example 2: Create a new material and assign to active object
+  Example 2: Create a material and assign to active object (without mat.type hallucination)
   ```python
   import bpy
 
   obj = bpy.context.active_object
-  mat = bpy.data.materials.new(name="RedMaterial")
-  mat.use_nodes = True
-  bsdf = mat.node_tree.nodes.get("Principled BSDF")
-  if bsdf:
-      bsdf.inputs['Base Color'].default_value = (1.0, 0.0, 0.0, 1.0)
+  if obj and obj.type == 'MESH':
+      mat = bpy.data.materials.new(name="RedMaterial")
+      mat.use_nodes = True
+      bsdf = mat.node_tree.nodes.get("Principled BSDF")
+      if bsdf:
+          bsdf.inputs['Base Color'].default_value = (1.0, 0.0, 0.0, 1.0)
 
-  if obj.data.materials:
-      obj.data.materials[0] = mat
+      if obj.data.materials:
+          obj.data.materials[0] = mat
+      else:
+          obj.data.materials.append(mat)
+      result = {"status": "ok", "material": mat.name, "object": obj.name}
   else:
-      obj.data.materials.append(mat)
-
-  result = {"status": "material_assigned", "material": mat.name, "object": obj.name}
+      result = {"status": "error", "message": "No active mesh object selected"}
   ```
 
-  Example 3: Query object info
+  Example 3: Query materials or non-object datablocks safely
   ```python
   import bpy
 
-  objects_info = [{"name": o.name, "type": o.type} for o in bpy.context.scene.objects]
-  result = {"object_count": len(objects_info), "objects": objects_info}
+  # Query all materials in the scene (materials do NOT have a .type property!)
+  materials_info = [
+      {"name": mat.name, "use_nodes": mat.use_nodes}
+      for mat in bpy.data.materials
+  ]
+  result = {"material_count": len(materials_info), "materials": materials_info}
   ```

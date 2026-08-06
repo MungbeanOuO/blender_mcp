@@ -43,11 +43,16 @@ def main(params: Params) -> Result:
 
     obj = bpy.data.objects.get(params.name)
     if obj is None:
+        extra_hint = ""
+        if params.name in bpy.data.materials:
+            extra_hint = " NOTE: {!r} is a Material, not a 3D Scene Object. get_object_detail_summary only accepts 3D Scene Objects (bpy.data.objects). Use execute_blender_code to query materials (e.g. bpy.data.materials[{!r}]).".format(params.name, params.name)
+        elif params.name in bpy.data.images:
+            extra_hint = " NOTE: {!r} is an Image datablock, not a 3D Scene Object.".format(params.name)
         available = sorted(bpy.data.objects.keys())
         return Result(
             status="error",
-            message="Object {!r} not found. Available objects: {:s}".format(
-                params.name, ", ".join(available) if available else "(none)",
+            message="Object {!r} not found.{:s} Available 3D Scene Objects: {:s}".format(
+                params.name, extra_hint, ", ".join(available) if available else "(none)",
             ),
         )
 

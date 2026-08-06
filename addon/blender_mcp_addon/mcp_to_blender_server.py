@@ -264,8 +264,9 @@ def _execute_code(
     """
     from .capture_output import CaptureOutput
     from .weak_sandbox import WeakSandboxForLLM
+    import bpy  # Pre-inject bpy into execution namespace
 
-    namespace: dict[str, object] = {"result": {}}
+    namespace: dict[str, object] = {"bpy": bpy, "result": {}}
     with CaptureOutput() as captured, WeakSandboxForLLM():
         try:
             exec(code, namespace)

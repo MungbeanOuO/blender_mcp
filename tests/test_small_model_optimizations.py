@@ -108,6 +108,15 @@ class TestResultFallback(unittest.TestCase):
         self.assertEqual(exec_res.response.get("status"), "ok")
         self.assertEqual(exec_res.response.get("result"), {"count": 42})
 
+    def test_execute_code_without_import_bpy(self):
+        from blender_mcp_addon.mcp_to_blender_server import _execute_code
+
+        # Code that uses `bpy` directly without `import bpy`
+        code_no_import = "result = {'has_bpy': bpy is not None}"
+        exec_res = _execute_code(code_no_import, strict_json=True)
+        self.assertEqual(exec_res.response.get("status"), "ok")
+        self.assertEqual(exec_res.response.get("result"), {"has_bpy": True})
+
 
 if __name__ == "__main__":
     unittest.main(exit=False)

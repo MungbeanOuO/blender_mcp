@@ -32,7 +32,11 @@ def register(mcp: FastMCP) -> None:
         name: str,
     ) -> dict[str, object]:
         """
-        Return a structured summary of the object identified by *name*.
+        Return a structured summary of a 3D Scene Object (bpy.data.objects) identified by *name*.
+
+        IMPORTANT: Only accepts 3D Scene Objects (e.g. Mesh, Camera, Light objects).
+        DO NOT use for Materials, Textures, Images, or Data-blocks.
+        To query materials or other datablocks, use `execute_blender_code` with `bpy.data.materials`.
 
         Includes type, transforms, parent, children, modifiers, constraints,
         materials, visibility, data-block name, and collections.
