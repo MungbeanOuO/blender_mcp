@@ -1,0 +1,41 @@
+name: Sync upstream
+
+on:
+  schedule:
+    # 每天 UTC 時間 00:00 自動執行一次（可依需求調整）
+    - cron: '0 0 * * *'
+  # 允許你在 GitHub 頁面上手動點擊按鈕觸發同步
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout destination repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # 若有多個分支需要同步，這裡會抓取所有分支資訊
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add Upstream and Sync
+        run: |
+          # 設定 Git 使用者資訊
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # 加入 Blender Forge 為 upstream 遠端倉庫
+          git remote add upstream https://projects.blender.org/lab/blender_mcp.git
+          git fetch upstream
+
+          # 抓取預設主分支（假設 upstream 預設分支為 main，若為 master 請替換）
+          DEFAULT_BRANCH=$(git remote show upstream | grep 'HEAD branch' | cut -d' ' -f5)
+          echo "Upstream HEAD branch is $DEFAULT_BRANCH"
+
+          # 切換到主分支並進行強行同步或 Rebase
+          git checkout $DEFAULT_BRANCH || git checkout -b $DEFAULT_BRANCH upstream/$DEFAULT_BRANCH
+          git merge upstream/$DEFAULT_BRANCH --ff-only || git reset --hard upstream/$DEFAULT_BRANCH
+
+          # 將更新推送到你的 GitHub 倉庫
+          git push origin $DEFAULT_BRANCH --force
