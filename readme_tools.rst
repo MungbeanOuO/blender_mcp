@@ -94,7 +94,9 @@ The tools exposed by the MCP server.
    Render the current scene to *output_path* using current render settings.
 
 ``search_api_docs``
+   Full-text search over the bundled Blender Python API reference.
 
 ``search_manual_docs``
+   Full-text search over the bundled Blender user manual.
 
 .. END TOOL LISTING
