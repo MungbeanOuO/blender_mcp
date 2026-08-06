@@ -1,21 +1,3 @@
-[tool.pylint.format]
-max-line-length = 120
-
-[tool.autopep8]
-max_line_length = 120
-ignore = [
-    "E721",
-    "E722",
-    "E402",
-    "W690",
-]
-aggressive = 2
-
-[tool.ruff]
-line-length = 120
-indent-width = 4
-target-version = "py314"
-
 [tool.ruff.lint]
 ignore = [
     # Don't suggest f-string.
@@ -31,7 +13,19 @@ ignore = [
     # Why disable? Code may be grouped in ways that make sense conceptually.
     "SIM114",
     # `__slots__` is not sorted.
-    # Why disable? Slots are often grouped logically, matching `__init__`, sometimes using groups.
+    # Why disable? Slots are often grouped logically, matching `__init__`, sometimes using groups. 
     "RUF023",
 ]
 
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.autopep8]
+max_line_length = 120
+ignore = [
+    "E721",
+    "E722",
+    "E402",
+    "W690",
+]
+aggressive = 2
