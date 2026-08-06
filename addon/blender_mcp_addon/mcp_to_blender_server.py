@@ -206,6 +206,47 @@ def _encode_response(response: dict[str, object]) -> bytes:
     return (json.dumps(response) + "\0").encode("utf-8")
 
 
+def format_truncated_traceback(tb_str: str) -> str:
+    """
+    Truncate internal add-on stack frames from traceback string.
+    Returns a concise traceback highlighting the user code error and exception.
+    """
+    if not tb_str:
+        return tb_str
+    lines = tb_str.strip().splitlines()
+    if len(lines) <= 4:
+        return tb_str
+
+    filtered: list[str] = []
+    if lines[0].startswith("Traceback"):
+        filtered.append(lines[0])
+
+    in_user_code = False
+    user_frames: list[str] = []
+    for line in lines[1:-1]:
+        if 'File "<string>"' in line or in_user_code:
+            in_user_code = True
+            user_frames.append(line)
+        elif not any(
+            internal in line
+            for internal in (
+                "mcp_to_blender_server.py",
+                "weak_sandbox.py",
+                "execute_interactive.py",
+                "execute_blocking.py",
+            )
+        ):
+            user_frames.append(line)
+
+    if user_frames:
+        filtered.extend(user_frames[-4:])
+    else:
+        filtered.append(lines[-2] if len(lines) >= 2 else lines[0])
+
+    filtered.append(lines[-1])
+    return "\n".join(filtered)
+
+
 def _execute_code(
         code: str,
         strict_json: bool,
@@ -229,7 +270,10 @@ def _execute_code(
         try:
             exec(code, namespace)
         except Exception:  # pylint: disable=broad-exception-caught
-            response: dict[str, object] = {"status": "error", "message": traceback.format_exc()}
+            response: dict[str, object] = {
+                "status": "error",
+                "message": format_truncated_traceback(traceback.format_exc()),
+            }
             if captured.stdout:
                 response["stdout"] = captured.stdout
             if captured.stderr:
@@ -247,34 +291,32 @@ def _execute_code(
             response["stderr"] = captured.stderr
         return _ExecResult(response, check_fn)
 
-    result = namespace["result"]
-    if not isinstance(result, dict):
-        response = {
-            "status": "error",
-            "message": (
-                "The `result` variable must be a dict, not {:s}. "
-                "Wrap your return value: `result = {{\"key\": value}}`"
-            ).format(type(result).__name__),
-        }
-    else:
-        # Guard against LLM-generated code storing non-serializable values
-        # such as Blender objects, e.g. `result = {"obj": bpy.context.active_object}`.
-        # Without this, `json.dumps` fails inside `_encode_response`.
-        if strict_json:
-            try:
-                json.dumps(result)
-            except (TypeError, ValueError) as ex:
-                response = {
-                    "status": "error",
-                    "message": "The `result` value is not JSON-serializable: {:s}".format(str(ex)),
-                }
-            else:
-                response = {"status": "ok", "result": result}
+    result = namespace.get("result")
+    if not isinstance(result, dict) or not result:
+        if result is None or not result:
+            result = {"status": "ok"}
         else:
-            # Use `repr` as a fallback so non-serializable objects
-            # (e.g. Blender ID types) appear as their string representation.
-            result = json.loads(json.dumps(result, default=repr))
+            result = {"status": "ok", "value": repr(result)}
+
+    # Guard against LLM-generated code storing non-serializable values
+    # such as Blender objects, e.g. `result = {"obj": bpy.context.active_object}`.
+    # Without this, `json.dumps` fails inside `_encode_response`.
+    if strict_json:
+        try:
+            json.dumps(result)
+        except (TypeError, ValueError) as ex:
+            response = {
+                "status": "error",
+                "message": "The `result` value is not JSON-serializable: {:s}".format(str(ex)),
+            }
+        else:
             response = {"status": "ok", "result": result}
+    else:
+        # Use `repr` as a fallback so non-serializable objects
+        # (e.g. Blender ID types) appear as their string representation.
+        result = json.loads(json.dumps(result, default=repr))
+        response = {"status": "ok", "result": result}
+
     if captured.stdout:
         response["stdout"] = captured.stdout
     if captured.stderr:

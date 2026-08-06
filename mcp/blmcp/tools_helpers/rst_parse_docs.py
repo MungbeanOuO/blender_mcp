@@ -19,6 +19,7 @@ paragraph slot.
 """
 
 __all__ = (
+    "clean_rst_markup",
     "data_dir",
     "doctree_for_path",
     "find_definition_in_doctree",
@@ -33,10 +34,35 @@ __all__ = (
 import collections
 import io
 import os
+import re
 from collections.abc import (
     Iterable,
     Iterator,
 )
+
+
+def clean_rst_markup(text: str) -> str:
+    """
+    Clean Sphinx/RST markup tags and normalize whitespace to reduce token noise for small LLMs.
+    """
+    if not text:
+        return text
+
+    # Remove Sphinx roles e.g. :class:`~bpy.types.Object` -> bpy.types.Object
+    text = re.sub(r':(?:class|ref|mod|func|data|attr|type|exc|const|enum|doc):\`~?([^`]+)\`', r'\1', text)
+
+    # Remove inline RST links `Link Text <url>`_ -> Link Text
+    text = re.sub(r'\`([^`<]+)\s*<[^`>]+>\`_', r'\1', text)
+
+    # Clean RST field list prefixes e.g. :param name: -> Param name:
+    text = re.sub(r':param\s+([^:]+):', r'Param \1:', text)
+    text = re.sub(r':type\s+([^:]+):', r'Type \1:', text)
+    text = re.sub(r':returns?:', r'Returns:', text)
+    text = re.sub(r':rtype:', r'Return type:', text)
+
+    # Collapse 3+ consecutive newlines to 2 newlines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
 
 import docutils  # pylint: disable=import-error
 import docutils.parsers.rst  # pylint: disable=import-error

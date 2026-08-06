@@ -495,9 +495,16 @@ def search(
             p[0] for p in paragraphs_full[lo:hi + 1]
         )
         hit.pop("_seed_idx", None)
+        if os.environ.get("BLMCP_COMPACT_DOCS") == "1":
+            from blmcp.tools_helpers.rst_parse_docs import clean_rst_markup
+            hit["text"] = clean_rst_markup(str(hit["text"]))
         return {"hits": [hit], "truncated": False}
 
     # Strip internal fields from the public response.
     for hit in hits:
         hit.pop("_seed_idx", None)
+        if os.environ.get("BLMCP_COMPACT_DOCS") == "1":
+            from blmcp.tools_helpers.rst_parse_docs import clean_rst_markup
+            if "text" in hit and isinstance(hit["text"], str):
+                hit["text"] = clean_rst_markup(hit["text"])
     return {"hits": hits, "truncated": truncated}

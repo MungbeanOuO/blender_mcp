@@ -453,6 +453,9 @@ def register(mcp: FastMCP) -> None:
                     ),
                     "examples": [],
                 }
+            if os.environ.get("BLMCP_COMPACT_DOCS") == "1":
+                from blmcp.tools_helpers.rst_parse_docs import clean_rst_markup
+                content = clean_rst_markup(content)
             return {
                 "kind": "exact",
                 "found": True,
@@ -482,6 +485,9 @@ def register(mcp: FastMCP) -> None:
                 continue
             doctree = doctree_for_path(prefix_path)
             if (rendered := find_definition_in_doctree(doctree, tail)):
+                if os.environ.get("BLMCP_COMPACT_DOCS") == "1":
+                    from blmcp.tools_helpers.rst_parse_docs import clean_rst_markup
+                    rendered = clean_rst_markup(rendered)
                 return {
                     "kind": "definition",
                     "found": True,

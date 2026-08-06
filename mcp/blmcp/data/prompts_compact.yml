@@ -1,0 +1,57 @@
+# Prompts configuration for Blender MCP Server (Compact profile for 7-10B LLMs).
+
+initial_instructions: |
+  You have access to Blender tools to interact with a Blender scene directly.
+  Blender must be running with the MCP add-on enabled.
+
+  # Core Execution Rules
+  - Preferred Tool: Use specific tools when available (`get_objects_summary`, `get_object_detail_summary`, `get_python_api_docs`, `render_viewport_to_path`).
+  - Code Execution: Use `execute_blender_code` to run Python code via `bpy`.
+  - Return Values: In `execute_blender_code`, assign a JSON-serializable dictionary to `result = {"key": value}`.
+  - Mode Awareness: Operators (`bpy.ops`) often require specific modes (Object, Edit, etc.) and explicit active/selected objects.
+  - Selection vs Active: Set both `obj.select_set(True)` and `bpy.context.view_layer.objects.active = obj` explicitly before calling operators.
+  - Scene Linking: Always link newly created objects to a collection (e.g. `bpy.context.collection.objects.link(obj)`).
+
+  # Few-Shot Code Examples
+
+  Example 1: Add a primitive cube and set transform
+  ```python
+  import bpy
+
+  bpy.ops.mesh.primitive_cube_add(size=2.0, location=(0, 0, 1))
+  cube = bpy.context.active_object
+  cube.name = "MyCube"
+
+  result = {
+      "status": "created",
+      "name": cube.name,
+      "location": list(cube.location)
+  }
+  ```
+
+  Example 2: Create a new material and assign to active object
+  ```python
+  import bpy
+
+  obj = bpy.context.active_object
+  mat = bpy.data.materials.new(name="RedMaterial")
+  mat.use_nodes = True
+  bsdf = mat.node_tree.nodes.get("Principled BSDF")
+  if bsdf:
+      bsdf.inputs['Base Color'].default_value = (1.0, 0.0, 0.0, 1.0)
+
+  if obj.data.materials:
+      obj.data.materials[0] = mat
+  else:
+      obj.data.materials.append(mat)
+
+  result = {"status": "material_assigned", "material": mat.name, "object": obj.name}
+  ```
+
+  Example 3: Query object info
+  ```python
+  import bpy
+
+  objects_info = [{"name": o.name, "type": o.type} for o in bpy.context.scene.objects]
+  result = {"object_count": len(objects_info), "objects": objects_info}
+  ```

@@ -50,21 +50,59 @@ def main() -> int:
             default=8000,
             help="Port to bind to for HTTP transports (default: 8000).",
         )
+    parser.add_argument(
+        "--prompt-profile",
+        choices=("standard", "compact"),
+        default="standard",
+        help="Prompt profile to use (default: standard, 'compact' optimized for 7-10B models).",
+    )
+    parser.add_argument(
+        "--tools-profile",
+        choices=("interactive", "minimal", "all"),
+        default="interactive",
+        help="Tools profile to register (default: interactive, excludes *_for_cli tools).",
+    )
+    parser.add_argument(
+        "--compact-docs",
+        action="store_true",
+        help="Strip Sphinx/RST markup tags from API documentation search results.",
+    )
     args = parser.parse_args()
+
+    if args.compact_docs or args.prompt_profile == "compact" or args.tools_profile == "minimal":
+        os.environ["BLMCP_COMPACT_DOCS"] = "1"
 
     # Load prompts.
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-    with open(os.path.join(data_dir, "prompts.yml"), encoding="utf-8") as fh:
+    prompt_file = "prompts_compact.yml" if args.prompt_profile == "compact" else "prompts.yml"
+    with open(os.path.join(data_dir, prompt_file), encoding="utf-8") as fh:
         prompts = yaml.safe_load(fh)
 
     mcp = FastMCP("blender-mcp", instructions=str(prompts["initial_instructions"]))
 
-    # Auto-discover and register all tools (they are never un-registered).
+    # Core tools for minimal profile
+    core_tools = {
+        "execute_blender_code",
+        "get_objects_summary",
+        "get_object_detail_summary",
+        "get_python_api_docs",
+        "search_api_docs",
+        "search_manual_docs",
+        "render_viewport_to_path",
+    }
+
+    # Auto-discover and register tools according to profile.
     import blmcp.tools as tools_pkg
 
     for _importer, modname, _ispkg in pkgutil.iter_modules(tools_pkg.__path__):
         if modname.endswith("_toolcode") or modname.startswith("_template_"):
             continue
+
+        if args.tools_profile == "interactive" and modname.endswith("_for_cli"):
+            continue
+        if args.tools_profile == "minimal" and modname not in core_tools:
+            continue
+
         mod = importlib.import_module("blmcp.tools.{:s}".format(modname))
         if hasattr(mod, "register"):
             mod.register(mcp)
